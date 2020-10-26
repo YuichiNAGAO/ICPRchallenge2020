@@ -85,5 +85,5 @@ You have to specify folder number (container number) for which you want to make 
 Also, as for "epochs", "train_type", "val", "loss_type", you need to use the same settings that you have set in train.py.
 Basically, all options are optimized.
 
-At the end of testing, `submission.csv` containing predictions is created under the current directory.
+At the end of testing, `submission.csv` containing the predictions is created under the current directory.
 
