@@ -58,7 +58,7 @@ Basically, all of the default options are optimized, so you just need to write p
 $ train.py --root './data'
 ```
 
-At the end of training, weights of trained model are saved under `[data dorectory]/results`.
+At the end of training, weights of trained model are saved under `[path to the dataset]/results`.
 
 
 ### 4. Testing
