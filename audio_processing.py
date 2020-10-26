@@ -64,8 +64,7 @@ class AudioProcessing():
         
         
         
-        
-        
+          
 if __name__ == "__main__":
 
     import argparse
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     root_pth = args.root
-    df = pd.read_csv(os.path.join(root_pth,'annotations.csv'), header = 0)
+    df = pd.read_csv('annotations.csv', header = 0)
     df_len=len(df)
     os.makedirs(os.path.join(root_pth, 'audio'), exist_ok=True)
     mfcc_path = (os.path.join(root_pth, 'audio', 'mfcc'))
