@@ -53,7 +53,7 @@ parser.add_argument('--reduction', action = 'store', type = str, default='mean',
 ```
 If you choose `part` for the train type, please make sure to choose a validation folder(i.e., container). Then the chosen folder is removed for training.
 If you choose `all`, the the model is trained using all of the train data.
-Basically, all options are optimized, so you just need to write path to data directory. For example,
+Basically, all of the default options are optimized, so you just need to write path to data directory. For example,
 ```
 $ train.py --root './data'
 ```
@@ -83,7 +83,7 @@ parser.add_argument('--loss_type', action='store', type = str, default = 'CE',
 ```
 You have to specify folder number (container number) for which you want to make the prediction.
 Also, as for "epochs", "train_type", "val", "loss_type", you need to use the same settings that you have set in train.py.
-Basically, all options are optimized.
+Basically, of the default options are optimized (the same default as train.py).
 
 At the end of testing, `submission.csv` containing the predictions is created under the current directory.
 
