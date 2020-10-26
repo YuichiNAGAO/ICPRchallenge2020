@@ -83,7 +83,7 @@ parser.add_argument('--loss_type', action='store', type = str, default = 'CE',
 ```
 You have to specify folder number (container number) for which you want to make the prediction.
 Also, as for "epochs", "train_type", "val", "loss_type", you need to use the same settings that you have set in train.py.
-Basically, of the default options are optimized (the same default as train.py).
+Basically, of the default options are optimized (the same default as train.py).  
 Example:
 ```
 $ train.py --root './data' --folder_num 13 14 15
