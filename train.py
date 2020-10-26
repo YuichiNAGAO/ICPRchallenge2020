@@ -3,27 +3,24 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import os
-
-from torch.autograd import Variable
-from torch.utils.data.dataset import Subset
-
 from model import Net
+from Mydataset import MyDataset
+
+import os
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+import numpy as np
+import pdb
+
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from tqdm import tqdm
+from torch.autograd import Variable
+from torch.utils.data.dataset import Subset
 
-import matplotlib.pyplot as plt
-from Mydataset import MyDataset
-from myutils import make_dir
-
-import numpy as np
 
 def loss_function(output, target, inv_E, loss_type = 'CE', reduction = 'sum', gamma=2,):
     
-    
-
     loss = None
     eps = 1e-7
     if loss_type == 'CE':
@@ -53,9 +50,11 @@ def log_inverse_class_frequency(n, N):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('--root', action='store', type = str, default='./data',
+                        help = 'root directory of the dataset')
     parser.add_argument('--batch_size', type=int, default=32, metavar='N',
                         help='input batch size for training [default: 32]')
-    parser.add_argument('--epochs', type=int, default=150, metavar='N',
+    parser.add_argument('--epochs', type=int, default=200, metavar='N',
                         help='number of epochs to train')
     parser.add_argument('--lr', type=float, default=1e-5, metavar='LR',
                         help='learning rate [default: 1e-5]')
@@ -70,13 +69,11 @@ if __name__ == "__main__":
     parser.add_argument('--reduction', action = 'store', type = str, default='mean',
                         choices=['sum', 'mean'],
                         help='reduction type of loss [default: mean]')
-    parser.add_argument('--root', action='store', type = str, default='../data',
-                        help = 'root directory of the dataset')
     parser.add_argument('--val', type=int, default=-1, metavar='N', 
                         choices=[-1,1,2,3,4,5,6,7,8,9],
                         help = 'which train folder is used as validation (not trained) [default: -1]')
     args = parser.parse_args()
-    
+    print("Loading data...")
     CLASS_NUM = 4
     CHANNEL_NUM = 8
     
@@ -87,7 +84,7 @@ if __name__ == "__main__":
     
     train_indices = []
     val_indices = []
-    mydataset = MyDataset2(root_pth=root_dir, test=False)
+    mydataset = MyDataset(root_pth=root_dir, test=False)
     n_samples = len(mydataset)
     folder_count = np.load(os.path.join(root_dir, 'audio', 'folder_count.npy')).tolist()
     
@@ -100,11 +97,7 @@ if __name__ == "__main__":
             else:
                 val_indices += l[total_num:total_num+num]
             total_num += num
-        print(folder_count)
-        print("train_indices",len(train_indices))
-        print("val_indices",len(val_indices))
     else:
-        # args.train_type == 'all' or args.val != -1
         train_indices = list(range(0, n_samples))  
         val_indices = (np.random.choice(train_indices, 1000, replace=False)).tolist()
     
@@ -139,14 +132,12 @@ if __name__ == "__main__":
             if use_cuda:
                 audio = audio.cuda()
                 target = target.cuda()
-            pdb.set_trace()
             audio = Variable(audio)
             target = Variable(target)
             
             optimizer.zero_grad()
             outputs = model(audio)
             _,preds=torch.max(outputs,1)
-            
             loss=loss_function(outputs, target, inv_E=inv_E, loss_type= args.loss_type, reduction=args.reduction)
             loss_train += loss.item()
             correct_train+=torch.sum(preds==target).item()
@@ -154,7 +145,7 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
             
-        print("Train Epoch {}/{} Loss:{:.4f} Acc:{:.3f}%".format(epoch,args.epochs,loss_train/len(train_loader),correct_train/len(train_loader)/args.batch_size*100))
+        print("Train Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch,args.epochs,loss_train/len(train_loader),correct_train/len(train_loader)/args.batch_size*100))
             
            
     def test(epoch):
@@ -180,8 +171,8 @@ if __name__ == "__main__":
                 correct_test+=torch.sum(preds==target).item()
             
           
-        print("Test Epoch {}/{} Loss:{:.4f} Acc{:.3f}%".format(epoch,args.epochs,loss_test/len(val_loader),correct_test/len(val_loader)/args.batch_size*100))
-            
+        print("Test Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch,args.epochs,loss_test/len(val_loader),correct_test/len(val_loader)/args.batch_size*100))
+    print("============================================================")  
     print('use_cuda: ',     use_cuda)
     
     print('batch-size',     args.batch_size)
@@ -198,12 +189,13 @@ if __name__ == "__main__":
     print('length of val dataset: ',    len(val_dataset))
     print('each_class_size: ',          each_class_size)
     print('log_inverse_class_frequency: ', inv_E)
-
+    print("============================================================")  
     
     for epoch in range(1, args.epochs + 1):
         train(epoch)
         if epoch % args.log_interval==0 :
             test(epoch)
+            print("------------------------------------")
             
     save_checkpoint={
             'state_dict': model.state_dict(),

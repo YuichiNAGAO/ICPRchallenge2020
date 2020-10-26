@@ -1,9 +1,9 @@
-import torch
-from torchvision import transforms
-from torch.utils.data import Dataset, DataLoader
+
 import numpy as np
 import os
 
+import torch
+from torch.utils.data import Dataset, DataLoader
 
 
 class MyDataset(torch.utils.data.Dataset):
@@ -56,7 +56,7 @@ class MyDataset(torch.utils.data.Dataset):
 if __name__=="__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root', type = str, default='../data')
+    parser.add_argument('--root', type = str, default='./data')
     root_pth = args.root
     
     mydataset=MyDataset(root_pth)

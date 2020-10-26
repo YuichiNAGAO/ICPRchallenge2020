@@ -2,6 +2,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from model import Net
+from audio_processing import AudioProcessing
+
 import numpy as np
 import scipy.io.wavfile
 import os
@@ -9,11 +12,11 @@ from tqdm import tqdm
 import pandas as pd
 from glob import glob
 import csv
+import pdb
 
 import torch
 
-from model import Net
-from audio_process import AudioProcessing
+
 
 def load_checkpoint(file_path, use_cuda=False):
     checkpoint = torch.load(file_path) if use_cuda else \
@@ -36,19 +39,19 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', action='store', type = str, default='./data')
+    parser.add_argument('--folder_num', action='store',type=int, nargs='*',default=[10, 11, 12],help='name of folder that you want to test')
     parser.add_argument('--train_type', action='store', type = str, default='all',
                         choices=['all', 'part'],
-                        help='train with all train data or use part of train data as validation [default: all]')
+                        help='please set the same string as you have put in training phase!! train with all train data or use part of train data as validation [default: all]')
     parser.add_argument('--val', type=int, default=-1, metavar='N', 
                         choices=[-1,1,2,3,4,5,6,7,8,9],
-                        help = 'which train folder is used as validation (not trained) [default: -1]')
+                        help = 'please set the same number as you have put in training phase!! which train folder is used as validation (not trained) [default: -1]')
     parser.add_argument('--loss_type', action='store', type = str, default = 'CE',
                         choices=['FL', 'CE'],
-                        help='loss type (Focal loss/Cross entropy) [default: CE]')
+                        help='please set the same string as you have put in training phase!! loss type (Focal loss/Cross entropy) [default: CE]')
     parser.add_argument('--epochs', type=int, default=200, metavar='N',
-                        help='number of epochs to train [default:200]')
+                        help='please set the same number as you have put in training phase!! number of epochs to train [default:200]')
     args = parser.parse_args()
-    
     
     
     header = ['Object','Sequence','Container capacity [mL]','Container mass [g]','Filling type','Filling level [%]','Filling mass [g]']
