@@ -10,7 +10,7 @@ To innstall libraries using anaconda, please execute this:
 $ bash conda_install.sh
 ```
 
-## Process
+## How to execute
 
 ### 1. Preparation
 Please confirm that `annotations.csv` is placed under the current directory.
