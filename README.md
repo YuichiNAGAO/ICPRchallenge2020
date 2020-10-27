@@ -1,5 +1,6 @@
 # ICPRchallenge2020
-A solution for ICPR 2020 CORSMAL Challenge
+A solution for ICPR 2020 CORSMAL Challenge Task2, filling type classification
+URL:http://corsmal.eecs.qmul.ac.uk/ICPR2020challenge.html
 
 ## Environment
 cuda 10.2
