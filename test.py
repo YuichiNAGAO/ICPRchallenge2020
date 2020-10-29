@@ -15,7 +15,8 @@ import csv
 import pdb
 
 import torch
-
+import time
+import random
 
 
 def load_checkpoint(file_path, use_cuda=False):
@@ -33,6 +34,12 @@ MAX_VALUE=194.19187653405487
 MIN_VALUE=-313.07119549054045
 save_size=64
 
+"""setup"""
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 if __name__ == "__main__":
 
@@ -51,10 +58,15 @@ if __name__ == "__main__":
                         help='please set the same string as you have put in training phase!! loss type (Focal loss/Cross entropy) [default: CE]')
     parser.add_argument('--epochs', type=int, default=200, metavar='N',
                         help='please set the same number as you have put in training phase!! number of epochs to train [default:200]')
+    parser.add_argument('--target', action='store', type = str, default = 'private',
+                        choices=['public', 'private'],
+                        help='select the target dataset (public test set/private test set) [default: private]')
     args = parser.parse_args()
     
-    
-    header = ['Object','Sequence','Container capacity [mL]','Container mass [g]','Filling type','Filling level [%]','Filling mass [g]']
+    start = time.time()
+
+    #header = ['Object','Sequence','Container capacity [mL]','Container mass [g]','Filling type','Filling level [%]','Filling mass [g]']
+    header = ['Container ID','Sequence','Fullness','Filling type', 'Container capacity [mL]']
     with open('./submission.csv', 'w') as f:
         writer = csv.writer(f)
         writer.writerow(header)
@@ -67,17 +79,24 @@ if __name__ == "__main__":
     if use_cuda:
         model.cuda()
     model.eval()
+
+    start_fol = 10
+    end_fol = 12
+
+    if args.target == 'private':
+        start_fol = 13
+        end_fol = 15
     
     
-    for folder_num in range (10,13):
+    for folder_num in range (start_fol,end_fol+1):
         pth = os.path.join(root_dir,str(folder_num), 'audio')
         files = glob(pth + "/*")
-        print("folder_num:{}".format(folder_num))
+        #print("folder_num:{}".format(folder_num))
         for file in sorted(files):
             
             count_pred=[0,0,0,0]
             seqence=file.split(os.path.sep)[-1].split("_")[0]
-            print("file_num:{}".format(seqence), end='')
+            #print("file_num:{}".format(seqence), end='')
             sample_rate, signal = scipy.io.wavfile.read(file)
             ap = AudioProcessing(sample_rate,signal)
             mfcc = ap.calc_MFCC()
@@ -101,9 +120,11 @@ if __name__ == "__main__":
                 final_pred=count_pred[1:4].index(max(count_pred[1:4]))+1
             else:
                 final_pred=0
-            print(" pred filling type: {}".format(final_pred))
-            datalist=[folder_num,seqence,-1,-1,final_pred,-1,-1]
+            #print(" pred filling type: {}".format(final_pred))
+            datalist=[folder_num,seqence,-1,final_pred,-1]
             with open('./submission.csv', 'a') as f:
                 writer = csv.writer(f)
                 writer.writerow(datalist)
-   
+
+    elapsed_time = time.time() - start
+    print("elapsed_time:{}".format(elapsed_time) + "sec")

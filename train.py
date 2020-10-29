@@ -19,6 +19,13 @@ from torch.autograd import Variable
 from torch.utils.data.dataset import Subset
 
 
+"""setup"""
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
 def loss_function(output, target, inv_E, loss_type = 'CE', reduction = 'sum', gamma=2,):
     
     loss = None
