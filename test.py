@@ -87,7 +87,7 @@ if __name__ == "__main__":
         start_fol = 13
         end_fol = 15
     
-    
+    datalist = []
     for folder_num in range (start_fol,end_fol+1):
         pth = os.path.join(root_dir,str(folder_num), 'audio')
         files = glob(pth + "/*")
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         for file in sorted(files):
             
             count_pred=[0,0,0,0]
-            seqence=file.split(os.path.sep)[-1].split("_")[0]
+            seqence=int(file.split(os.path.sep)[-1].split("_")[0])
             #print("file_num:{}".format(seqence), end='')
             sample_rate, signal = scipy.io.wavfile.read(file)
             ap = AudioProcessing(sample_rate,signal)
@@ -121,10 +121,12 @@ if __name__ == "__main__":
             else:
                 final_pred=0
             #print(" pred filling type: {}".format(final_pred))
-            datalist=[folder_num,seqence,-1,final_pred,-1]
-            with open('./submission.csv', 'a') as f:
-                writer = csv.writer(f)
-                writer.writerow(datalist)
-
+            datalist.append([folder_num,seqence,-1,final_pred,-1])
+            #with open('./submission.csv', 'a') as f:
+            #    writer = csv.writer(f)
+            #    writer.writerow(datalist)
+    with open('./submission.csv', 'w') as f:
+        df = pd.DataFrame(datalist, columns=header)
+        df.to_csv('./submission.csv', sep = ';',index=False)
     elapsed_time = time.time() - start
     print("elapsed_time:{}".format(elapsed_time) + "sec")
