@@ -7,7 +7,7 @@ import os
 import numpy as np
 from tqdm import tqdm
 import scipy.io.wavfile
-
+import time
 
 class AudioProcessing():
     def __init__(self,sample_rate,signal,frame_length_t=0.025,frame_stride_t=0.01,nfilt =64):
@@ -73,6 +73,9 @@ if __name__ == "__main__":
     parser.add_argument('--ratio_step', type =float, default=0.25)
     args = parser.parse_args()
     
+    start = time.time()
+
+
     root_pth = args.root
     df = pd.read_csv('annotations.csv', header = 0)
     df_len=len(df)
@@ -131,6 +134,9 @@ if __name__ == "__main__":
     np.save(os.path.join(root_pth, 'audio', 'filling_type'), np.array(filling_type_list))
     np.save(os.path.join(root_pth, 'audio', 'folder_count'), np.array(folder_count))
     np.save(os.path.join(root_pth, 'audio', 'folder_count_detail'), np.array(folder_count_detail))
+
+    elapsed_time = time.time() - start
+    print("elapsed_time:{}".format(elapsed_time) + "sec")
             
             
             
