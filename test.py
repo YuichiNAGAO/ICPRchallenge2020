@@ -2,8 +2,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from model import Net
-from audio_processing import AudioProcessing
+from model import Net, LSTMNet
+from AudioProcessing import AudioProcessing
+from Mydataset import Padding
 
 import numpy as np
 import scipy.io.wavfile
@@ -18,11 +19,26 @@ import torch
 import time
 import random
 
+"""
+$ python test.py --root D:\codes\dataset --folder_num 13 14 15
+"""
 
-def load_checkpoint(file_path, use_cuda=False):
+def load_checkpoint_T2(file_path, use_cuda=False):
     checkpoint = torch.load(file_path) if use_cuda else \
         torch.load(file_path, map_location=lambda storage, location: storage)
     model = Net()
+    model.load_state_dict(checkpoint['state_dict'])
+    return model
+
+def load_checkpoint_T1(file_path, use_cuda=False):
+    checkpoint = torch.load(file_path) if use_cuda else \
+        torch.load(file_path, map_location=lambda storage, location: storage)
+    model = LSTMNet(is_cuda=use_cuda,
+                    input_dim=checkpoint['input_dim'],
+                    output_dim=checkpoint['class_num'],
+                    hidden_dim=checkpoint['hidden_dim'],
+                    n_layers=checkpoint['n_layers'],
+                    drop_prob=checkpoint['drop_prob'])
     model.load_state_dict(checkpoint['state_dict'])
     return model
 
@@ -30,11 +46,14 @@ def load_checkpoint(file_path, use_cuda=False):
 """
 Constant 
 """
-MAX_VALUE=194.19187653405487
-MIN_VALUE=-313.07119549054045
+mfcc_MAX_VALUE=194.19187653405487
+mfcc_MIN_VALUE=-313.07119549054045
+
+t2_MAX_VALUE = 57.464638
+t2_MIN_VALUE = -1.1948369
 save_size=64
 
-"""setup"""
+"""Setup"""
 random.seed(0)
 np.random.seed(0)
 torch.manual_seed(0)
@@ -56,46 +75,44 @@ if __name__ == "__main__":
     parser.add_argument('--loss_type', action='store', type = str, default = 'CE',
                         choices=['FL', 'CE'],
                         help='please set the same string as you have put in training phase!! loss type (Focal loss/Cross entropy) [default: CE]')
-    parser.add_argument('--epochs', type=int, default=200, metavar='N',
+    parser.add_argument('--t1_epochs', type=int, default=400, metavar='N',
+                        help='please set the same number as you have put in training phase!! number of epochs to train [default:400]')
+    parser.add_argument('--t2_epochs', type=int, default=200, metavar='N',
                         help='please set the same number as you have put in training phase!! number of epochs to train [default:200]')
-    parser.add_argument('--target', action='store', type = str, default = 'private',
-                        choices=['public', 'private'],
-                        help='select the target dataset (public test set/private test set) [default: private]')
     args = parser.parse_args()
     
     start = time.time()
 
-    #header = ['Object','Sequence','Container capacity [mL]','Container mass [g]','Filling type','Filling level [%]','Filling mass [g]']
     header = ['Container ID','Sequence','Fullness','Filling type', 'Container capacity [mL]']
-    with open('./submission.csv', 'w') as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
     
     use_cuda = torch.cuda.is_available()
     root_dir = args.root
-    results_dir = os.path.join(root_dir, 'results')
-    model=load_checkpoint(os.path.join(results_dir, "{}_{}_{}_{}.pth".format(args.train_type,args.val,args.loss_type,args.epochs)), use_cuda=use_cuda)
+
+    model_dir = os.path.join(root_dir, './models')
+    model_T2=load_checkpoint_T2(os.path.join(model_dir, "T2_{}_{}_{}_{}.pth".format(args.train_type,args.val,args.loss_type,args.t2_epochs)), use_cuda=use_cuda)
+
+    model_T1=load_checkpoint_T1(os.path.join(model_dir, "T1_{}_{}_{}_{}.pth".format(args.train_type,args.val,args.loss_type,args.t1_epochs)), use_cuda=use_cuda)
     
     if use_cuda:
-        model.cuda()
-    model.eval()
+        model_T2.cuda()
+        model_T1.cuda()
 
-    start_fol = 10
-    end_fol = 12
-
-    if args.target == 'private':
-        start_fol = 13
-        end_fol = 15
-    
-    datalist = []
-    for folder_num in range (start_fol,end_fol+1):
+    model_T2.eval()
+    model_T1.eval()
+    hidden = model_T1.init_hidden(1)
+    answer_list = []
+    pad = Padding(100)
+    for folder_num in args.folder_num:
         pth = os.path.join(root_dir,str(folder_num), 'audio')
         files = glob(pth + "/*")
         #print("folder_num:{}".format(folder_num))
+
         for file in sorted(files):
-            
+            predlist = []
+            datalist = []
             count_pred=[0,0,0,0]
-            seqence=int(file.split(os.path.sep)[-1].split("_")[0])
+            #seqence=int(file.split(os.path.sep)[-1].split("_")[0])
+            seqence=-1
             #print("file_num:{}".format(seqence), end='')
             sample_rate, signal = scipy.io.wavfile.read(file)
             ap = AudioProcessing(sample_rate,signal)
@@ -103,30 +120,46 @@ if __name__ == "__main__":
             mfcc_length=mfcc.shape[0]
             f_step=int(mfcc.shape[1]*0.25)
             f_length=mfcc.shape[1]
-            save_mfcc_num=int(np.ceil(float(np.abs(mfcc_length - save_size)) / f_step))
+            save_mfcc_num=int(np.ceil(float(np.abs(mfcc_length - save_size)) /f_step))
             for i in range(save_mfcc_num):
                 tmp_mfcc = mfcc[i*f_step:save_size+i*f_step,: ,:]
-                tmp_mfcc= (tmp_mfcc-MIN_VALUE)/(MAX_VALUE-MIN_VALUE)
+                tmp_mfcc= (tmp_mfcc-mfcc_MIN_VALUE)/(mfcc_MAX_VALUE-mfcc_MIN_VALUE)
                 tmp_mfcc=tmp_mfcc.transpose(2,0,1)
                 audio=torch.from_numpy(tmp_mfcc.astype(np.float32))
                 audio=torch.unsqueeze(audio, 0)
                 if use_cuda:
                     audio = audio.cuda()
-                
-                output=model(audio)
-                _,pred=torch.max(output,1)
-                count_pred[pred.item()]+=1
+                #Task 2     
+                with torch.no_grad():
+                    mid, pred_T2=model_T2.before_lstm(audio)
+                    _,pred_T2=torch.max(pred_T2,1)
+                    count_pred[pred_T2.item()]+=1
+                    predlist.append(pred_T2.item())
+
+                    datalist.append(mid.to('cpu').detach().numpy().copy())
+
             if  count_pred[1]>5 or count_pred[2]>5 or count_pred[3]>5:
-                final_pred=count_pred[1:4].index(max(count_pred[1:4]))+1
+                final_pred_T2=count_pred[1:4].index(max(count_pred[1:4]))+1
             else:
-                final_pred=0
-            #print(" pred filling type: {}".format(final_pred))
-            datalist.append([folder_num,seqence,-1,final_pred,-1])
-            #with open('./submission.csv', 'a') as f:
-            #    writer = csv.writer(f)
-            #    writer.writerow(datalist)
+                final_pred_T2=0
+            #print(" pred filling type: {}".format(final_pred_T2))
+            datalist = np.squeeze(np.array(datalist))
+            predlist = np.squeeze(np.array(predlist))
+
+            data = (datalist-t2_MIN_VALUE)/(t2_MAX_VALUE-t2_MIN_VALUE)
+            data = pad(data, predlist)
+            data = torch.from_numpy(data.astype(np.float32))
+            data = torch.unsqueeze(data, 0)
+            if use_cuda:
+                    data = data.cuda()
+            with torch.no_grad():
+                hidden = tuple([each.data for each in hidden])
+                outputs, hidden = model_T1(data, hidden)
+                _,pred_T1=torch.max(outputs,1)
+            answer_list.append([folder_num,seqence,pred_T1.item(),final_pred_T2,-1])
     with open('./submission.csv', 'w') as f:
-        df = pd.DataFrame(datalist, columns=header)
+        df = pd.DataFrame(answer_list, columns=header)
         df.to_csv('./submission.csv', sep = ';',index=False)
+
     elapsed_time = time.time() - start
     print("elapsed_time:{}".format(elapsed_time) + "sec")

@@ -17,6 +17,7 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.utils.data.dataset import Subset
+import random
 
 
 """setup"""
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     
     use_cuda = torch.cuda.is_available()
     root_dir = args.root
-    results_dir = os.path.join(root_dir, 'results')
+    results_dir = os.path.join(root_dir, 'T2_results')
     os.makedirs(results_dir,exist_ok=True)
     
     train_indices = []
@@ -213,5 +214,5 @@ if __name__ == "__main__":
             'val'       : args.val,
         
         }
-    torch.save(save_checkpoint, "{}/{}_{}_{}_{}.pth".format(results_dir,args.train_type,args.val,args.loss_type,args.epochs))
+    torch.save(save_checkpoint, "{}/T2_{}_{}_{}_{}.pth".format(results_dir,args.train_type,args.val,args.loss_type,args.epochs))
         

@@ -9,6 +9,10 @@ from tqdm import tqdm
 import scipy.io.wavfile
 import time
 
+"""
+$ python preprocessing_T2.py --root D:\codes\dataset 
+"""
+
 class AudioProcessing():
     def __init__(self,sample_rate,signal,frame_length_t=0.025,frame_stride_t=0.01,nfilt =64):
         
