@@ -160,10 +160,13 @@ def make_pointcloud(rgb_mask,param,im_depth):
         for j,pixel in enumerate(row):
             if pixel==0:
                 continue
-            norm_cord=np.dot(np.linalg.inv(intrinsic),np.array([j,i,3]).reshape(3,1))
-            camera_cord=norm_cord *pixel
+            norm_cord=np.dot(np.linalg.inv(intrinsic),np.array([j,i,1]).reshape(3,1))
+            camera_cord=norm_cord *pixel/1000
             world_cord=np.dot(np.linalg.inv(r_mat),camera_cord-t_vec).reshape(1,3)
             world_cord=np.concatenate([world_cord,img_rgb[i][j].reshape(1,3)],1).astype(np.float32)
+            #world_cord=np.dot(r_mat,camera_cord)+t_vec
+            #world_cord=world_cord.reshape(1,3)
+            #world_cord=np.concatenate([world_cord,img_rgb[i][j].reshape(1,3)],1).astype(np.float32)
             if stack_cord is None :
                 stack_cord=world_cord
             else:
