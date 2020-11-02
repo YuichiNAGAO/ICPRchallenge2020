@@ -11,6 +11,22 @@ To innstall libraries using anaconda, please execute this:
 $ bash conda_install.sh
 ```
 
+The contents of `conda_install.sh`is :
+```
+conda install pytorch torchvision -c pytorch
+conda install -c anaconda numpy
+conda install -c anaconda scipy
+conda install -c anaconda pillow
+conda install -c anaconda cython
+conda install -c conda-forge matplotlib
+conda install -c anaconda scikit-image
+conda install -c conda-forge opencv
+conda install -c anaconda ipython
+conda install -c conda-forge tqdm
+conda install -c anaconda scikit-learn
+conda install -c anaconda pandas
+```
+
 ## How to execute scripts
 ### For organizers
 ##### 1. clone this repository using `$ git clone git@github.com:YuichiNAGAO/ICPRchallenge2020.git`
@@ -29,8 +45,10 @@ root of scripts
 |         |----- T2_all_-1_CE_200.pth(model for task 2)
 |----- train_T1.py
 |----- train_T2.py
+|----- test.py
 |----- model.py
 |----- Mydataset.py
+|----- annotations.csv
 ...
 
 root of dataset
