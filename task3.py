@@ -7,11 +7,14 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 from PIL import Image
+import pandas as pd
 
 
 import torch
 import torchvision
 import torchvision.transforms as T
+
+from pyntcloud import PyntCloud
 
 import pdb
 
@@ -83,7 +86,8 @@ class Video_processing:
                         frame_count += 1
                         continue
                     roi_list=roi_extract(outputs)
-                    self.num_detected[row][frame_count//self.step]=len(roi_list)
+                    self.num_detected[row][frame_count//self.step]=len(roi_list
+                                                                      )
                     DT.draw_bb(roi_list,frame)
                     for roi in roi_list:
                         DT.draw_mask(roi)
@@ -153,26 +157,27 @@ def make_pointcloud(rgb_mask,param,im_depth):
     stack_cord=None
     img_rgb=rgb_mask[0]
     masked_depth=rgb_mask[1]/255*im_depth
-    intrinsic=param[0]["rgb"]
-    r_mat=param[1]["rgb"]["rvec"]
-    t_vec=param[1]["rgb"]["tvec"]
+    intrinsic=param[0]["ir2"]
+    r_mat=param[1]["ir2"]["rvec"]
+    t_vec=param[1]["ir2"]["tvec"]
     for i,row in enumerate(masked_depth):
         for j,pixel in enumerate(row):
             if pixel==0:
                 continue
             norm_cord=np.dot(np.linalg.inv(intrinsic),np.array([j,i,1]).reshape(3,1))
             camera_cord=norm_cord *pixel/1000
-            world_cord=np.dot(np.linalg.inv(r_mat),camera_cord-t_vec).reshape(1,3)
-            world_cord=np.concatenate([world_cord,img_rgb[i][j].reshape(1,3)],1).astype(np.float32)
+            world_cord=np.dot(np.linalg.inv(r_mat),camera_cord-t_vec).reshape(1,3).astype(np.float64)
+            world_cord=np.concatenate([world_cord,img_rgb[i][j].reshape(1,3)],1).astype(np.float64)
             #world_cord=np.dot(r_mat,camera_cord)+t_vec
             #world_cord=world_cord.reshape(1,3)
-            #world_cord=np.concatenate([world_cord,img_rgb[i][j].reshape(1,3)],1).astype(np.float32)
+            #world_cord=np.concatenate([world_cord,img_rgb[i][j].reshape(1,3)],1).astype(np.float64)
             if stack_cord is None :
                 stack_cord=world_cord
             else:
                 stack_cord=np.concatenate([stack_cord, world_cord], 0)
     return stack_cord
     
+
 
 
 
@@ -190,7 +195,6 @@ if __name__="__main__":
     
     DT=Detection()  
     os.makedirs('{}/pointdata'.format(root_dir), exist_ok=True)
-    
     for container in range(1,10):
         os.makedirs('{}/pointdata/{}'.format(root_dir,container), exist_ok=True)
         folder="{}/{}".format(root_dir,container)
@@ -230,7 +234,14 @@ if __name__="__main__":
                 else:
                     point_data=np.concatenate([point_data, make_pointcloud(rgb_mask,param,depth_img)], 0)
 
-            np.savetxt('{}/pointdata/{}/{}.csv'.format(root_dir,container,filename.rsplit("_",1)[0]), point_data)
+
+            cloud = PyntCloud(pd.DataFrame(
+            data=point_data,
+            columns=["x", "y", "z", "red", "green", "blue"]))
+            cloud.to_file('{}/pointdata/{}/{}.ply'.format(root_dir,container,filename.rsplit("_",1)[0]))
+            #pcd = o3d.geometry.PointCloud()
+            #pcd.points = o3d.utility.Vector3dVector(point_data)
+            #o3d.io.write_point_cloud('{}/pointdata/{}/{}.ply'.format(root_dir,container,filename.rsplit("_",1)[0]), pcd)
+            #np.savetxt('{}/pointdata/{}/{}.ply'.format(root_dir,container,filename.rsplit("_",1)[0]), point_data)
             break
         break
-    
