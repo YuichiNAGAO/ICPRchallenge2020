@@ -4,7 +4,7 @@ models/
 models.zip
 
 # Byte-compiled / optimized / DLL files
-#__pycache__/
+__pycache__/
 
 
 # Visual Studio 2015/2017 cache/options directory
