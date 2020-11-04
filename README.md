@@ -14,10 +14,12 @@ Libraries:
 - CUDA 10.2
 
 ## Quick Start
-##### 1. `$ git clone git@github.com:YuichiNAGAO/ICPRchallenge2020.git　&&　cd ICPRchallenge2020`
-##### 2. Download the pre-trained models from here[https://github.com/YuichiNAGAO/ICPRchallenge2020/releases/] and unzip it under the current directory.
-##### 4. `$ conda-env create --name [new_env] --file ./env.yml`
-##### 5. `$ python test.py --root [path to the dataset]　--folder_num [folder numbers]`
+```
+$ git clone git@github.com:YuichiNAGAO/ICPRchallenge2020.git　&&　cd ICPRchallenge2020`
+Download the pre-trained models from [here](https://github.com/YuichiNAGAO/ICPRchallenge2020/releases/) and unzip it under the current directory.
+$ conda-env create --name [new_env] --file ./env.yml`
+$ python test.py --root [path to the dataset]　--folder_num [folder numbers]`
+```
 Then, the `submission.csv` containing the predictions is created under the current directory.
 
 #### Expected file structures
