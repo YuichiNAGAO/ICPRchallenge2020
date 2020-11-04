@@ -13,7 +13,7 @@ Libraries:
 - conda 4.3.30
 - CUDA 10.2
 
-## Quick Start
+## Quick Demo
 ```
 $ git clone git@github.com:YuichiNAGAO/ICPRchallenge2020.git　&&　cd ICPRchallenge2020`
 ```
