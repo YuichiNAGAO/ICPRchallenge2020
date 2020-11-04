@@ -52,7 +52,8 @@ root of the dataset
 ```
 
 ### About additional annotations
-We made additional annotations annotations.csv to improve accuracies. `start` / `end` columns indicate when the subject start/finish pouring the filling from a jar into a glass/cup or shaking an already filled food box respectively. The value `-1` denotes that the subject do not pour or shake in the video.
+We made additional annotations in `annotations.csv` to improve accuracies. 
+`start` / `end` columns indicate when the subject start/finish pouring the filling from a jar into a glass/cup or shaking an already filled food box respectively. The value `-1` denotes that the subject does not pour or shake in that video.
 
 ------
 ## About Task 1 and Task 2
