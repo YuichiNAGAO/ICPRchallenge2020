@@ -81,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument('--t2_epochs', type=int, default=200, metavar='N',
                         help='please set the same number as you have put in training phase!! number of epochs to train [default:200]')
     parser.add_argument('--step_T3', type = int, default=8,help='step of frame for object detection using maskrcnn')
-    parser.add_argument('--view', action='store',type=str,default="c1",help='which view you use')
+    parser.add_argument('--view', action='store',type=str,default="c1",help='which view you use for T3')
     args = parser.parse_args()
     
     start = time.time()
@@ -179,7 +179,7 @@ if __name__ == "__main__":
                 u.encoding = 'latin1'
                 intrinsic,extrinsic,_,_ = u.load()
             param=[intrinsic,extrinsic]
-            depth_path=os.path.join(pth_rgb.replace("rgb","depth"),filename.split("_")[0],args.view,filename.split("_")[0])
+            depth_path=os.path.join(pth_rgb.replace("rgb","depth"),filename.split("_")[0],args.view,filename.split("_")[0])+".png"
             depth_img=cv2.imread(depth_path,-1)
             point_data=make_pointcloud(rgb_mask,param,depth_img)
             point_data_normal=outiers_processing(point_data)
