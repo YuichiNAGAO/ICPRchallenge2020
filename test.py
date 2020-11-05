@@ -87,7 +87,7 @@ if __name__ == "__main__":
     
     start = time.time()
 
-    header = ['Container ID','Sequence','Fullness','Filling type', 'Container capacity [mL]']
+    header = ['Container ID','Sequence', 'Container Capacity','Filling type', 'Filling level']
     
     use_cuda = torch.cuda.is_available()
     root_dir = args.root
@@ -187,10 +187,10 @@ if __name__ == "__main__":
             volume=volume_by_world2image(point_data_normal,param,rgb_mask[1])
             ###end of task3
             
-            answer_list.append([folder_num,seqence,pred_T1.item(),final_pred_T2,volume])
+            answer_list.append([folder_num,seqence,volume,final_pred_T2,pred_T1.item()])
     with open('./submission.csv', 'w') as f:
         df = pd.DataFrame(answer_list, columns=header)
-        df.to_csv('./submission.csv', sep = ';',index=False)
+        df.to_csv('./submission.csv', sep = ',',index=False)
 
     elapsed_time = time.time() - start
     print("elapsed_time:{}".format(elapsed_time) + "sec")
