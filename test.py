@@ -80,6 +80,8 @@ if __name__ == "__main__":
                         help='please set the same number as you have put in training phase!! number of epochs to train [default:400]')
     parser.add_argument('--t2_epochs', type=int, default=200, metavar='N',
                         help='please set the same number as you have put in training phase!! number of epochs to train [default:200]')
+    parser.add_argument('--step_T3', type = int, default=8,help='step of frame for object detection using maskrcnn')
+    parser.add_argument('--view', action='store',type=str,default="c1",help='which view you use')
     args = parser.parse_args()
     
     start = time.time()
@@ -103,8 +105,10 @@ if __name__ == "__main__":
     hidden = model_T1.init_hidden(1)
     answer_list = []
     pad = Padding(100)
+    DT=Detection() 
     for folder_num in args.folder_num:
         pth = os.path.join(root_dir,str(folder_num), 'audio')
+        pth_rgb=os.path.join(root_dir,str(folder_num), 'rgb')
         files = glob(pth + "/*")
         #print("folder_num:{}".format(folder_num))
 
@@ -157,7 +161,32 @@ if __name__ == "__main__":
                 hidden = tuple([each.data for each in hidden])
                 outputs, hidden = model_T1(data, hidden)
                 _,pred_T1=torch.max(outputs,1)
-            answer_list.append([folder_num,seqence,pred_T1.item(),final_pred_T2,-1])
+                
+                
+            ###start of task3 
+            filename=os.path.basename(file).replace("audio",args.view).replace("wav","mp4")
+            path_video=os.path.join(pth_rgb,filename)
+            VP=Video_processing(path_video,args.step_T3)
+            VP.processing(DT)
+            n_detected=VP.get_num_detected()
+            n_maskedpixel=VP.get_size_mask()
+            which_frame=choose_frame(n_detected,n_maskedpixel)*args.step_T3
+            best_frame=int(which_frame[0])
+            rgb_mask=VP.reselect(args.view,DT,best_frame)
+            calib_path=os.path.splitext(path_video)[0].replace("rgb","calib")+"_calib"+'.pickle'
+            with open(calib_path, 'rb') as f:
+                u = pickle._Unpickler(f)
+                u.encoding = 'latin1'
+                intrinsic,extrinsic,_,_ = u.load()
+            param=[intrinsic,extrinsic]
+            depth_path=os.path.join(pth_rgb.replace("rgb","depth"),filename.split("_")[0],args.view,filename.split("_")[0])
+            depth_img=cv2.imread(depth_path,-1)
+            point_data=make_pointcloud(rgb_mask,param,depth_img)
+            point_data_normal=outiers_processing(point_data)
+            volume=volume_by_world2image(point_data_normal,param,rgb_mask[1])
+            ###end of task3
+            
+            answer_list.append([folder_num,seqence,pred_T1.item(),final_pred_T2,volume])
     with open('./submission.csv', 'w') as f:
         df = pd.DataFrame(answer_list, columns=header)
         df.to_csv('./submission.csv', sep = ';',index=False)
