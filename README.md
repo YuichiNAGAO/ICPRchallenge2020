@@ -1,5 +1,5 @@
 # ICPRchallenge2020
-A solution for ICPR 2020 CORSMAL Challenge Task2, filling type classification
+A solution for ICPR 2020 CORSMAL Challenge
 URL:http://corsmal.eecs.qmul.ac.uk/ICPR2020challenge.html
 
 ## Environment
@@ -56,7 +56,10 @@ We made additional annotations in `annotations.csv` to improve accuracies.
 `start` / `end` columns indicate when the subject start/finish pouring the filling from a jar into a glass/cup or shaking an already filled food box respectively. The value `-1` denotes that the subject does not pour or shake in that video.
 
 ------
-## About Task 1 and Task 2
+## Procedure 
+
+We take deep learning approaches for task1 and task2 and non-deep learning approach for task3. Therefore, we have to preprocess data and train the models for task1 and task2, but we don't have to for task3.
+
 
 ### 1. Data pre-processing for task 2
 ```
@@ -139,6 +142,8 @@ other options:
                         [default:400]
   --t2_epochs N         please set the same number as you have put in training phase!! number of epochs to train
                         [default:200]
+  --step_T3             step of frame in video for object detection using maskrcnn[default:8]
+  --view                which view you use for T3                        
 ```
 You have to specify folder number (container number) for which you want to make the prediction.
 Also, as for "epochs", "train_type", "val", "loss_type", you need to use the same settings that you have set in train.py.
