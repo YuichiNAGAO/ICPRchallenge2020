@@ -223,7 +223,7 @@ def volume_by_world2image(point_data_normal,param,mask):
     for uv_pred in uv_round:
         if np.any(np.all(uv_pred==uv_pair,axis=1)):
             count+=1 
-    return volume_box*(count/len(uv_round))**2
+    return volume_box*(count/len(uv_round))
     
             
 

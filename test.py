@@ -180,13 +180,12 @@ if __name__ == "__main__":
                 u.encoding = 'latin1'
                 intrinsic,extrinsic,_,_ = u.load()
             param=[intrinsic,extrinsic]
-            depth_path=os.path.join(pth_rgb.replace("rgb","depth"),filename.split("_")[0],args.view,filename.split("_")[0])+".png"
+            depth_path=os.path.join(pth_rgb.replace("rgb","depth"),filename.split("_")[0],args.view,str(best_frame).zfill(4))+".png"
             depth_img=cv2.imread(depth_path,-1)
             point_data=make_pointcloud(rgb_mask,param,depth_img)
             point_data_normal=outiers_processing(point_data)
             volume=volume_by_world2image(point_data_normal,param,rgb_mask[1])
             ###end of task3
-            print("{}".format([folder_num,seqence,pred_T1.item(),final_pred_T2,volume]))
             
             answer_list.append([folder_num,seqence,pred_T1.item(),final_pred_T2,volume])
     with open('./submission.csv', 'w') as f:
