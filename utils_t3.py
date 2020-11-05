@@ -1,22 +1,13 @@
-
-import glob
-import argparse
 import cv2
 import numpy as np
-import os
-import pickle
-import matplotlib.pyplot as plt
-from PIL import Image
-import pandas as pd
-
-
 import torch
 import torchvision
+import matplotlib.pyplot as plt
 import torchvision.transforms as T
-
-from pyntcloud import PyntCloud
-
 import pdb
+from sklearn.ensemble import IsolationForest
+
+
 
 class Detection:
     def __init__(self):
@@ -58,36 +49,36 @@ class Detection:
     
 class Video_processing:
     def __init__(self,path,step):
-        cap = cv2.VideoCapture(path)
+        self.cap = cv2.VideoCapture(path)
         self.path=path
-        self.fps = cap.get(cv2.CAP_PROP_FPS)
-        self.video_frame = cap.get(cv2.CAP_PROP_FRAME_COUNT) 
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        self.video_frame = self.cap.get(cv2.CAP_PROP_FRAME_COUNT) 
         self.video_len_sec = self.video_frame / self.fps
         self.step=step
-        self.num_detected=np.zeros((3,int(self.video_frame//step)))
+        self.num_detected=np.zeros(int(self.video_frame//step+1))
+        self.size_mask=np.zeros(int(self.video_frame//step+1))
         
         
-    def processing(self,view,DT,draw_or_not):
-        newpath=self.path.replace("c1",view) 
-        row=int(view[-1])-1
-        cap = cv2.VideoCapture(newpath)
+        
+    def processing(self,DT,draw_or_not=False):
         frame_count=0
         while True:
-            ret, frame = cap.read()
+            ret, frame = self.cap.read()
             if ret == True:
                 if frame_count%self.step==0:
-                    print("frame_count{}".format(frame_count))
-                    #print("{}s".format(frame_count/self.fps))
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     outputs=DT.predict(frame_rgb)
                     if not human_exists(outputs):
-                        print("Human doesn't exist")
-                        self.num_detected[row][frame_count//self.step]=0
+                        self.num_detected[frame_count//self.step]=0
                         frame_count += 1
                         continue
                     roi_list=roi_extract(outputs)
-                    self.num_detected[row][frame_count//self.step]=len(roi_list)
-                    if draw_or_not:                                                
+                    self.num_detected[frame_count//self.step]=len(roi_list)
+                    if not roi_list:
+                        self.size_mask[frame_count//self.step]=0
+                    else:
+                        self.size_mask[frame_count//self.step]=DT.num_mask_pixel(roi_list[0])
+                    if draw_or_not:
                         DT.draw_bb(roi_list,frame)
                         for roi in roi_list:
                             DT.draw_mask(roi)
@@ -100,6 +91,9 @@ class Video_processing:
     def get_num_detected(self):
         return self.num_detected
     
+    def get_size_mask(self):
+        return self.size_mask
+    
     def reselect(self,view,DT,frame_num):
         newpath=self.path.replace("c1",view) 
         cap = cv2.VideoCapture(newpath)
@@ -109,6 +103,8 @@ class Video_processing:
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             outputs=DT.predict(frame_rgb)
             roi_list=roi_extract(outputs)
+            #DT.draw_bb(roi_list,frame)
+            #DT.draw_mask(roi_list[0])
         return  [frame_rgb,roi_list[0][3]]
 
 
@@ -144,18 +140,25 @@ def bgr_im_show(image):
     plt.show() 
             
             
-def choose_frame(n_detected):
+def choose_frame(n_detected,n_maskedpixel):
     nul_frame=[]
-    for col in range(n_detected.shape[1]):
-        if np.any(n_detected[:,col]==0):
-            n_detected[:,col]=None
-            
-    summed=np.sum(n_detected, axis=0)
-    return np.argsort(summed)
+    combined=np.concatenate([np.arange(len(n_detected)).reshape(1,-1),n_detected.reshape(1,-1),n_maskedpixel.reshape(1,-1)],axis=0)
+    final_order=None
+    for total_detected in np.unique(combined[1,:]):
+        if total_detected==0:
+            continue
+        extracted=combined[:,combined[1,:]==total_detected]
+        order=extracted[0,:][np.argsort(extracted[2,:])[::-1]]
+        if final_order is None:
+            final_order=order
+        else:
+            np.append(final_order,order)
+    
+    return final_order
 
-def make_pointcloud2(rgb_mask,param,im_depth):
+
+def make_pointcloud(rgb_mask,param,im_depth):
     stack_cord=None
-    img_rgb=rgb_mask[0]
     masked_depth=rgb_mask[1]/255*im_depth
     intrinsic=param[0]["rgb"]
     r_mat=param[1]["rgb"]["rvec"]
@@ -167,105 +170,60 @@ def make_pointcloud2(rgb_mask,param,im_depth):
             norm_cord=np.dot(np.linalg.inv(intrinsic),np.array([j,i,1]).reshape(3,1))
             camera_cord=norm_cord *pixel/1000
             world_cord=np.dot(np.linalg.inv(r_mat),camera_cord-t_vec).reshape(1,3).astype(np.float64)
-            world_cord=np.concatenate([world_cord,img_rgb[i][j].reshape(1,3)],1).astype(np.float64)
-            #world_cord=np.dot(r_mat,camera_cord)+t_vec
-            #world_cord=world_cord.reshape(1,3)
-            #world_cord=np.concatenate([world_cord,img_rgb[i][j].reshape(1,3)],1).astype(np.float64)
             if stack_cord is None :
                 stack_cord=world_cord
             else:
                 stack_cord=np.concatenate([stack_cord, world_cord], 0)
     return stack_cord
 
-def make_pointcloud(rgb_mask,param,im_depth):
-    mask=rgb_mask[1]
-    intrinsic=param[0]["rgb"]
-    r_mat=param[1]["rgb"]["rvec"]
-    t_vec=param[1]["rgb"]["tvec"]
-    vv,uu=np.where(mask!=0)
-    uv_grid=np.concatenate([uu.reshape(-1,1),vv.reshape(-1,1),np.ones((len(uu), 1))],axis=1)
-    norm_coord = np.transpose(np.dot(np.linalg.inv(intrinsic), np.transpose(uv_grid)))
-    mask_depth=im_depth[vv,uu]
-    depth = np.repeat(mask_depth.reshape(-1, 1), 3, axis=1) / 1000.0
-    camera_coord = np.multiply(depth, norm_coord)
-    _t_vec = np.repeat(t_vec.reshape(-1, 3), len(camera_coord), axis=0)
-    world_coord=np.dot(r_mat,np.transpose(camera_coord)) + np.transpose(_t_vec)
+def outiers_processing(point_data):
+    clf = IsolationForest()
+    clf.fit(point_data)
+    y_pred = clf.predict(point_data)
+    point_data_normal=point_data[y_pred==1]
+
+    clf_xy = IsolationForest()
+    clf_xy.fit(point_data_normal[:,:2])
+    pred_xy = clf_xy.predict(point_data_normal[:,:2])
+
+    clf_xz = IsolationForest()
+    clf_xz.fit(point_data_normal[:,[0,2]])
+    pred_xz = clf_xz.predict(point_data_normal[:,[0,2]])
+
+    clf_yz = IsolationForest()
+    clf_yz.fit(point_data_normal[:,1:])
+    pred_yz = clf_yz.predict(point_data_normal[:,1:])
+
+    pred_xyz=np.logical_and(pred_xy==1,pred_xz==1,pred_yz==1)
+
+    point_data_normal=point_data_normal[pred_xyz]
     
-    return np.transpose(world_coord)
+    return point_data_normal
 
 
-
-        
-if __name__="__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--root', type = str, default='./data')
-    parser.add_argument('--step', type = int, default=12)
-    args = parser.parse_args()
+def volume_by_world2image(point_data_normal,param,mask):
+    x_max,y_max,z_max=np.max(point_data_normal,axis=0)
+    x_min,y_min,z_min=np.min(point_data_normal,axis=0)
+    xx,yy,zz = np.meshgrid(np.arange(x_min,x_max,0.01), np.arange(y_min,y_max,0.01),np.arange(z_min,z_max,0.01))
+    xyz_grid = np.concatenate([xx.reshape(-1, 1), yy.reshape(-1, 1),zz.reshape(-1, 1)], axis=1)
+    volume_box=(x_max-x_min)*(y_max-y_min)*(z_max-z_min)*1000000
+    homo_world_coord=np.concatenate([xyz_grid,np.ones((xyz_grid.shape[0],1))],axis=1)
+    homo_world_coord=np.transpose(homo_world_coord)
+    proj_mat=param[1]["rgb"]['projMatrix']
+    homo_image_coord=np.dot(proj_mat,homo_world_coord)
+    homo_image_coord=np.transpose(homo_image_coord)
+    uv1=homo_image_coord/homo_image_coord[:,2].reshape(-1,1)
+    uv=uv1[:,:2]
     
-    root_dir = args.root
-    step=args.step
+    uv_round=np.round(uv).astype(np.int64)
     
-    draw_or_not=False
-    DT=Detection()  
-    os.makedirs('{}/pointdata'.format(root_dir), exist_ok=True)
-    for container in range(1,10):
-        os.makedirs('{}/pointdata/{}'.format(root_dir,container), exist_ok=True)
-        folder="{}/{}".format(root_dir,container)
-        for path in sorted(glob.glob(folder+"/rgb/*")):
-            filename=os.path.splitext(os.path.basename(path))[0]
-            if not filename.split("_")[-1]=="c1":
-                continue
-            print(path)
+    correct_v,correct_u=np.where(mask!=0)
+    uv_pair=np.concatenate([correct_u.reshape(-1,1),correct_v.reshape(-1,1)],axis=1)
+    count=0
+    for uv_pred in uv_round:
+        if np.any(np.all(uv_pred==uv_pair,axis=1)):
+            count+=1 
+    return volume_box*(count/len(uv_round))**2
+    
             
-            VP=Video_processing(path,step)
-            for view in ["c1","c2","c3"]:
-                VP.processing(view,DT,draw_or_not)
-            n_detected=VP.get_num_detected()
-            which_frame=choose_frame(n_detected)*step
-            best_frame=which_frame[0]
-            pdb.set_trace()
-            print(best_frame)
-            image_store=[]
-            param_store=[]
-            depth_store=[]
-            for view in ["c1","c2","c3"]:
-                image_store.append(VP.reselect(view,DT,best_frame))
-
-                calib_path="{}/new_calib/{}_calib.pickle".format(root_dir,view)
-                with open(calib_path, 'rb') as f:
-                    u = pickle._Unpickler(f)
-                    u.encoding = 'latin1'
-                    intrinsic,extrinsic,_,_ = u.load()
-                param_store.append([intrinsic,extrinsic])
-
-                depth_path=folder+"/depth/"+filename.rsplit("_",1)[0]+"/{}/{}.png".format(view,str(best_frame).zfill(4))
-                depth_store.append(cv2.imread(depth_path,-1))
-
-            point_data=None
-
-            for rgb_mask,param,depth_img in zip(image_store,param_store,depth_store):
-                if point_data is None:
-                    point_data=make_pointcloud(rgb_mask,param,depth_img)
-                    #point_data=np.array([["X","Y","Z","R","G","B"]],dtype=str)
-                    #point_data=np.concatenate([point_data, make_pointcloud(rgb_mask,param,depth_img)], 0)
-                else:
-                    point_data=np.concatenate([point_data, make_pointcloud(rgb_mask,param,depth_img)], 0)
-
-            clf = IsolationForest()
-            clf.fit(point_data)
-            y_pred = clf.predict(point_data)
-            point_data_normal=point_data[y_pred==1]
-
-            cloud = PyntCloud(pd.DataFrame(
-            data=point_data_normal,
-            columns=["x", "y", "z"]))
-            cloud.to_file('{}/pointdata/{}/{}.ply'.format(root_dir,container,filename.rsplit("_",1)[0]))
-            """
-            cyl = pyrsc.Cylinder()
-            center,axis ,radius, inliers = cyl.fit(point_data_normal, thresh=0.01)
-            print("radius: ",radius)
-            print("ratio initilers: ", inliers/len(point_data_normal))
-            """
-            break
-        break
 
