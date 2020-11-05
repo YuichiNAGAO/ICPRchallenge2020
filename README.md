@@ -125,7 +125,7 @@ At the end of training, weights of trained model are saved under `[path to the d
 ### 5. Testing
 Please copy the saved models to `./model/` 
 ```
-$ python test.py --root [path to the dataset]　--folder_num 10 11 12
+$ python test.py --root [path to the dataset] --folder_num 10 11 12
 ```
 other options:
 ```
