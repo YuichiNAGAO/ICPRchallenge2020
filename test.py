@@ -88,6 +88,7 @@ if __name__ == "__main__":
     start = time.time()
 
     header = ['Container ID','Sequence', 'Container Capacity','Filling type', 'Filling level']
+    print('Container, ID Sequence, Container Capacity, Filling type, Filling level')
     
     use_cuda = torch.cuda.is_available()
     root_dir = args.root
@@ -165,6 +166,7 @@ if __name__ == "__main__":
                 
                 
             ###start of task3 
+            
             filename=os.path.basename(file).replace("audio",args.view).replace("wav","mp4")
             path_video=os.path.join(pth_rgb,filename)
             VP=Video_processing(path_video,args.step_T3)
@@ -185,8 +187,9 @@ if __name__ == "__main__":
             point_data=make_pointcloud(rgb_mask,param,depth_img)
             point_data_normal=outiers_processing(point_data)
             volume=volume_by_world2image(point_data_normal,param,rgb_mask[1])
-            ###end of task3
             
+            ###end of task3
+            print("{:2d}{:2d}{:6.1f}{:2d}{:2d}".format(folder_num,seqence,volume,final_pred_T2,pred_T1.item()))
             answer_list.append([folder_num,seqence,volume,final_pred_T2,pred_T1.item()])
     with open('./submission.csv', 'w') as f:
         df = pd.DataFrame(answer_list, columns=header)
