@@ -2,9 +2,24 @@
 A solution for ICPR 2020 CORSMAL Challenge
 URL:http://corsmal.eecs.qmul.ac.uk/ICPR2020challenge.html
 
+## Environment
+```
+programming language: python
+employed hardware:
+- OS: CentOS (Microsoft Windows 10 Pro)
+- GPU: (4) GeForce RTX 2080 Ti
+- GPU RAM: 3６ GB
+- CPU: Intel(R) Core(TM) i7-6950X CPU @ 3.00GHz
+- RAM: 48 GB
+- Cores: 10
+Libraries
+- conda 4.3.30
+- CUDA 10.2
+```
+
 ## Quick Demo
 ```
-$ git clone git@github.com:YuichiNAGAO/ICPRchallenge2020.git　&&　cd ICPRchallenge2020`
+$ git clone git@github.com:YuichiNAGAO/ICPRchallenge2020.git　&&　cd ICPRchallenge2020
 ```
 Download the pre-trained models from [here](https://github.com/YuichiNAGAO/ICPRchallenge2020/releases/) and unzip it under the current directory.
 ```
