@@ -15,6 +15,7 @@ import pandas as pd
 from glob import glob
 import csv
 import pdb
+import pickle
 
 import torch
 import time
@@ -185,6 +186,7 @@ if __name__ == "__main__":
             point_data_normal=outiers_processing(point_data)
             volume=volume_by_world2image(point_data_normal,param,rgb_mask[1])
             ###end of task3
+            print("{}".format([folder_num,seqence,pred_T1.item(),final_pred_T2,volume]))
             
             answer_list.append([folder_num,seqence,pred_T1.item(),final_pred_T2,volume])
     with open('./submission.csv', 'w') as f:
