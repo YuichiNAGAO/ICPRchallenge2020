@@ -117,8 +117,8 @@ if __name__ == "__main__":
             predlist = []
             datalist = []
             count_pred=[0,0,0,0]
-            #seqence=int(file.split(os.path.sep)[-1].split("_")[0])
-            seqence=-1
+            seqence=int(file.split(os.path.sep)[-1].split("_")[0])
+            #seqence=-1
             #print("file_num:{}".format(seqence), end='')
             sample_rate, signal = scipy.io.wavfile.read(file)
             ap = AudioProcessing(sample_rate,signal)
