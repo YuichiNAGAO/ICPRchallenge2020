@@ -174,6 +174,11 @@ if __name__ == "__main__":
             n_detected=VP.get_num_detected()
             n_maskedpixel=VP.get_size_mask()
             which_frame=choose_frame(n_detected,n_maskedpixel)*args.step_T3
+            if not len(which_frame):
+                volume=-1
+                print("{:2d}{:2d}{:6.1f}{:2d}{:2d}".format(folder_num,seqence,volume,final_pred_T2,pred_T1.item()))
+                answer_list.append([folder_num,seqence,volume,final_pred_T2,pred_T1.item()])
+                continue
             best_frame=int(which_frame[0])
             rgb_mask=VP.reselect(args.view,DT,best_frame)
             calib_path=os.path.splitext(path_video)[0].replace("rgb","calib")+"_calib"+'.pickle'

@@ -141,7 +141,7 @@ def bgr_im_show(image):
             
             
 def choose_frame(n_detected,n_maskedpixel):
-    nul_frame=[]
+    
     combined=np.concatenate([np.arange(len(n_detected)).reshape(1,-1),n_detected.reshape(1,-1),n_maskedpixel.reshape(1,-1)],axis=0)
     final_order=None
     for total_detected in np.unique(combined[1,:]):
@@ -152,7 +152,7 @@ def choose_frame(n_detected,n_maskedpixel):
         if final_order is None:
             final_order=order
         else:
-            np.append(final_order,order)
+            final_order=np.append(final_order,order)
     
     return final_order
 
