@@ -192,3 +192,16 @@ For example, you can implement like as follows:
 python read_voting.py --root [path to the dataset] --folder-num 1 --file-name s1_fi3_fu2_b1_l0
 ```
 The result is here:
+
+<img src= "figures/1_s1_fi3_fu2_b1_l0_hist.png" width = "300">
+<img src= "figures/1_s1_fi3_fu2_b1_l0_bar.png" width = "500">
+
+Other examples are here:
+
+<img src= "figures/1_s0_fi1_fu2_b0_l1_hist.png" width = "300">
+<img src= "figures/1_s0_fi1_fu2_b0_l1_bar.png" width = "500">
+
+<img src= "figures/1_s1_fi2_fu2_b1_l0_hist.png" width = "500">
+<img src= "figures/1_s1_fi2_fu2_b1_l0_bar.png" width = "500">
+
+`Black`: emply, `red`:pasta, `green`:rice, `blue`:water
