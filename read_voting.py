@@ -54,12 +54,12 @@ if __name__ == "__main__":
             if pred[i] == 0:
                 img[:, int(i * pix):int((i+1)*pix)] = [0,0, 0]#emply:black
             elif pred[i] == 1:
-                img[:, int(i * pix):int((i+1)*pix)] = [255,215,0]#pasta:red
+                img[:, int(i * pix):int((i+1)*pix)] = [255,215,0]#pasta:yellow
             elif pred[i] == 2:
                 img[:, int(i * pix):int((i+1)*pix)] = [173,255,47]#rice:green
             elif pred[i] == 3:
-                img[:, int(i * pix):int((i+1)*pix)] = [51,0,204]#water:blue
-            
+                img[:, int(i * pix):int((i+1)*pix)] = [100,149,237]#water:blue
+        img = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_RGB2BGR)
         cv2.imwrite(os.path.join(result_dir, "{}_bar.png".format(idx)), img)
         # print("./bar.png is saved")
         print('filename:{}, ground truth:{}, predected:{}, frequency:{}'.format(idx, df[idx]["sequence"], df[idx]["final_pred"], count_pred))
