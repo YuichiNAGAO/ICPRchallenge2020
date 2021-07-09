@@ -158,3 +158,37 @@ Also, as for "epochs", "train_type", "val", "loss_type", you need to use the sam
 Basically, all the default options are optimized (the same default as train.py).
 
 At the end of testing, `submission.csv` containing the predictions is created under the current directory.
+
+### 6. Visualize the majority voting of T2
+Please confirm that the model for T2 is already trained and saved.
+
+First, you need to save the result of the voting as a json file executing the folloing commnad:
+```
+python voting.py --root [path to the dataset] --folder_num 10 11 12 
+```
+Then under the dataset directory, `voting/` folder will be created and the `voting/voting.json` file will appear.
+`--folder_num` is an option. You can choose the folder number you want to save.
+As for "epochs", "train_type", "val", "loss_type", you need to use the same settings that you have set in `train.py.` 
+(These options are the same as the `test.py`. So please refer to `5 Testing`.)
+
+Now you are ready to visualize the data.
+Please implement the following commands:
+```
+python read_voting.py --root [path to the dataset]
+```
+Then the histgram and visualization of the voting of each data will be saved as `voting/[folder_number]_[file_name]_hist.png` and `voting/[folder_number]_[file_name]_bar.png.`
+The holizontal axis of `..._bar.png` is the time, and the length of the graph differs depending on the video length.
+
+other options:
+```
+--folder-num [FOLDER_NUM [FOLDER_NUM ...]]
+                        name of folder that you want to test
+--file-name file name
+```
+If you execute without setting neither folder_num or file_name, all of the data saved in the json file will be visualized.
+
+For example, you can implement like as follows:
+```
+python read_voting.py --root [path to the dataset] --folder-num 1 --file-name s1_fi3_fu2_b1_l0
+```
+The result is here:
