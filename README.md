@@ -159,7 +159,7 @@ Basically, all the default options are optimized (the same default as train.py).
 
 At the end of testing, `submission.csv` containing the predictions is created under the current directory.
 
-### 6. Visualize the majority voting of T2
+### 6. Visualization of the voting of T2
 Please confirm that the model for T2 is already trained and saved.
 
 First, you need to save the result of the voting as a json file executing the folloing commnad:
