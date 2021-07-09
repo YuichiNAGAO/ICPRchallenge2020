@@ -204,4 +204,4 @@ Other examples are here:
 <img src= "figures/1_s1_fi2_fu2_b1_l0_hist.png" width = "500">
 <img src= "figures/1_s1_fi2_fu2_b1_l0_bar.png" width = "500">
 
-`Black`: emply, `red`:pasta, `green`:rice, `blue`:water
+`Black`: emply, `yellow`:pasta, `green`:rice, `blue`:water
